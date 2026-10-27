@@ -8,4 +8,3 @@ https://huggingface.co/spaces/YOUR_USERNAME/YOUR_SPACE_NAME
 
 ## 📁 Files in this Repository
 - `oral-diseases-image-classification-2.ipynb`: The main Jupyter Notebook containing model training and evaluation.
-- `oral-diseases-image-classification-2.ipynb`: The main Jupyter Notebook containing data preprocessing, model training, and evaluation.
