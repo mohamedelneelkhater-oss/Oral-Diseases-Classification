@@ -1,10 +1,39 @@
-# Oral Diseases Classification 🦷
+# 🦷 Oral Diseases Image Classification
 
-This project classifies oral disease images using Deep Learning and provides an interactive web interface built with Gradio.
+A deep learning project that classifies oral diseases from images, comparing a custom CNN
+against fine-tuned pretrained models, with a Gradio app for the best one.
 
-## 🚀 Live Demo
-You can try the live web app on Hugging Face Spaces:
-https://huggingface.co/spaces/YOUR_USERNAME/YOUR_SPACE_NAME
+## Overview
+- **Task:** Multi-class image classification of oral diseases ([N] classes)
+- **Dataset:** [Dataset name / source on Kaggle]
+- **Framework:** TensorFlow / Keras
 
-## 📁 Files in this Repository
-- `oral-diseases-image-classification-2.ipynb`: The main Jupyter Notebook containing model training and evaluation.
+## Pipeline
+1. Data loading, exploration, and preprocessing
+2. Data augmentation
+3. Custom CNN built from scratch (baseline)
+4. Transfer learning with 3 pretrained models: [Model 1], [Model 2], [Model 3]
+5. Fine-tuning for every model
+6. Automatic hyperparameter tuning
+7. Callbacks: ReduceLROnPlateau, ModelCheckpoint (best weights), EarlyStopping
+8. Evaluation: classification report, confusion matrix, per-class plots
+9. Comparative analysis and discussion of results
+10. Deployment of the best model with Gradio
+
+## Results
+| Model | Accuracy | Precision | Recall | F1 |
+|-------|----------|-----------|--------|----|
+| Custom CNN | [XX]% | [XX] | [XX] | [XX] |
+| [Model 1] | [XX]% | [XX] | [XX] | [XX] |
+| [Model 2] | [XX]% | [XX] | [XX] | [XX] |
+| [Model 3] | [XX]% | [XX] | [XX] | [XX] |
+
+**Best model:** [Name], deployed in the Gradio app.
+
+## How to run
+1. Open the notebook on Kaggle (or locally)
+2. Install requirements: `pip install tensorflow gradio scikit-learn matplotlib`
+3. Run all cells top to bottom
+
+## Tech stack
+Python · TensorFlow/Keras · scikit-learn · Matplotlib · Gradio
