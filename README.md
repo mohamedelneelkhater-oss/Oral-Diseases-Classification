@@ -20,16 +20,6 @@ against fine-tuned pretrained models, with a Gradio app for the best one.
 9. Comparative analysis and discussion of results
 10. Deployment of the best model with Gradio
 
-## Results
-| Model | Accuracy | Precision | Recall | F1 |
-|-------|----------|-----------|--------|----|
-| Custom CNN | [XX]% | [XX] | [XX] | [XX] |
-| [Model 1] | [XX]% | [XX] | [XX] | [XX] |
-| [Model 2] | [XX]% | [XX] | [XX] | [XX] |
-| [Model 3] | [XX]% | [XX] | [XX] | [XX] |
-
-**Best model:** [Name], deployed in the Gradio app.
-
 ## How to run
 1. Open the notebook on Kaggle (or locally)
 2. Install requirements: `pip install tensorflow gradio scikit-learn matplotlib`
