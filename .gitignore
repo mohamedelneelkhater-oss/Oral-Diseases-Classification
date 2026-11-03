@@ -1,1 +1,26 @@
+# نماذج وأوزان كبيرة
+*.keras
+*.h5
+*.pkl
+*.weights.h5
 
+# مجلدات نتjściات التتدريب والفهرسة
+checkpoints/
+tuner/
+deployment/
+working/
+examples/
+*.ipynb_checkpoints/
+
+# بايثون
+__pycache__/
+*.py[cod]
+*.pyo
+.env
+
+# نظام التشغيل
+.DS_Store
+Thumbs.db
+
+# نتائج比较
+model_comparison.csv
