@@ -15,7 +15,7 @@ from tensorflow import keras
 tf.get_logger().setLevel("ERROR")
 
 st.set_page_config(
-    page_title="Oral Diseases Classification",
+    page_title="تصنيف أمراض الفم والأسنان",
     page_icon="🦷",
     layout="centered",
 )
@@ -33,29 +33,14 @@ DEFAULT_CLASS_NAMES = [
 ]
 DEFAULT_IMG_SIZE = (160, 160)
 
-# ==================== ضع رابط تحميل النموذج هنا ====================
-MODEL_URL = "https://رابط-تحميل-ملف-النموذج-الخاص-بك.keras"  # <-- غيّر هذا الرابط
-MODEL_PATH = BASE / "best_model.keras"
-# ==================================================================
-
-@st.cache_resource
-def download_model():
-    if MODEL_URL and "رابط-تحميل" not in MODEL_URL:
-        if not MODEL_PATH.exists():
-            with st.sidebar.spinner("جاري تحميل النموذج من الإنترنت..."):
-                try:
-                    r = requests.get(MODEL_URL, timeout=180)
-                    r.raise_for_status()
-                    MODEL_PATH.write_bytes(r.content)
-                except Exception as e:
-                    st.sidebar.error(f"فشل تحميل النموذج: {e}")
-                    return None
-    return MODEL_PATH if MODEL_PATH.exists() else None
-
+# ------------------------------------------------------------
+# تحميل النموذج: من ملف محلي أو من رفع المستخدم
+# ------------------------------------------------------------
 @st.cache_resource
 def load_model_and_config():
     cfg_path = BASE / "app_config.json"
 
+    # قراءة إعدادات الفئات إذا وجدت
     if cfg_path.exists():
         cfg = json.loads(cfg_path.read_text(encoding="utf-8"))
         class_names = cfg["class_names"]
@@ -64,28 +49,34 @@ def load_model_and_config():
         class_names = DEFAULT_CLASS_NAMES
         img_size = DEFAULT_IMG_SIZE
 
-    model_path = download_model()
+    # محاولة تحميل النموذج من نفس مجلد التطبيق
+    model_path = BASE / "best_model.keras"
     model = None
-    if model_path:
+    if model_path.exists():
         model = keras.models.load_model(str(model_path), compile=False)
 
-    return model, class_names, img_size
+    return model, class_names, img_size, model_path
 
 
-model, CLASS_NAMES, IMG_SIZE = load_model_and_config()
+model, CLASS_NAMES, IMG_SIZE, MODEL_PATH = load_model_and_config()
 
+# إذا لم يوجد النموذج، اعرض زر الرفع في الشريط الجانبي
 if model is None:
-    st.sidebar.warning("لم يتم العثور على النموذج. يرجى رفع ملف best_model.keras")
+    st.sidebar.warning("يجب تحميل النموذج على الرابط. يرجى رفع ملف best_model.keras")
     uploaded_model = st.sidebar.file_uploader("Upload model file (.keras)", type=["keras"])
     if uploaded_model is not None:
+        # حفظ الملف المرفوع مؤقتاً وتحميله
         tmp_model_path = BASE / "best_model_uploaded.keras"
         tmp_model_path.write_bytes(uploaded_model.read())
         model = keras.models.load_model(str(tmp_model_path), compile=False)
-        st.sidebar.success("تم تحميل النموذج بنجاح")
+        st.sidebar.success("تم تحميل النموذج بنجاح!")
     else:
         st.stop()
 
 
+# ------------------------------------------------------------
+# دالة التنبؤ
+# ------------------------------------------------------------
 def predict_image(pil_img):
     img = pil_img.convert("RGB").resize(IMG_SIZE)
     arr = np.asarray(img, dtype="float32")[None, ...]
@@ -99,64 +90,72 @@ def show_prediction(pil_img, top3, probs):
     st.image(pil_img, use_container_width=True)
     best_class, best_conf = top3[0]
     if best_conf >= 0.5:
-        st.success(f"Top prediction: **{best_class}** — Confidence: {best_conf * 100:.1f}%")
+        st.success(f"✅ التوقع الأبرز: **{best_class}** — الثقة: {best_conf * 100:.1f}%")
     else:
-        st.warning(f"Top prediction: **{best_class}** — Confidence: {best_conf * 100:.1f}% (low confidence)")
-    df_chart = pd.DataFrame({"Class": [c for c, _ in top3], "Probability": [p for _, p in top3]})
-    st.bar_chart(df_chart.set_index("Class"))
-    with st.expander("Show probabilities for all classes"):
+        st.warning(f"⚠️ التوقع الأبرز: **{best_class}** — الثقة: {best_conf * 100:.1f}% (ثقة منخفضة)")
+
+    df_chart = pd.DataFrame({"الفئة": [c for c, _ in top3], "الاحتمال": [p for _, p in top3]})
+    st.bar_chart(df_chart.set_index("الفئة"))
+
+    with st.expander("🔍 عرض احتمالات جميع الفئات"):
         all_probs = sorted(zip(CLASS_NAMES, probs), key=lambda x: x[1], reverse=True)
         for cls, p in all_probs:
             st.write(f"{cls}: {p * 100:.2f}%")
 
 
-st.title("🦷 Oral Diseases Image Classification")
-st.markdown("Select image source from the sidebar.")
+# ------------------------------------------------------------
+# واجهة المستخدم
+# ------------------------------------------------------------
+st.title("🦷 تطبيق تصنيف أمراض الفم والأسنان")
+st.markdown("اختر مصدر الصورة من القائمة الجانبية.")
 
-st.sidebar.header("Image source")
-option = st.sidebar.radio("Choose source:", ["From device 📱", "From data 📊", "From internet 🌐"])
+st.sidebar.header("📂 مصدر الصورة")
+option = st.sidebar.radio("اختر المصدر:", ["من الجهاز 📱", "من البيانات 📊", "من الإنترنت 🌐"])
 
-if option == "From device 📱":
-    st.subheader("Upload an image from your device")
-    uploaded = st.file_uploader("Choose an image", type=["jpg", "jpeg", "png", "bmp"])
+# الخيار 1: من الجهاز
+if option == "من الجهاز 📱":
+    st.subheader("ارفع صورة من جهازك")
+    uploaded = st.file_uploader("اختر صورة", type=["jpg", "jpeg", "png", "bmp"])
     if uploaded is not None:
         img = Image.open(uploaded)
         top3, probs = predict_image(img)
         show_prediction(img, top3, probs)
 
-elif option == "From data 📊":
-    st.subheader("Sample images from dataset")
+# الخيار 2: من البيانات (مجلد الأمثلة)
+elif option == "من البيانات 📊":
+    st.subheader("عينة من صور البيانات")
     examples_dir = BASE / "examples"
     if examples_dir.exists():
         image_paths = sorted(examples_dir.glob("*.*"))[:30]
-        st.write(f"Number of available images: {len(image_paths)}")
+        st.write(f"عدد الصور المتاحة: {len(image_paths)}")
         cols = st.columns(5)
         for idx, img_path in enumerate(image_paths):
             with cols[idx % 5]:
                 img = Image.open(img_path)
                 st.image(img, caption=img_path.name, use_container_width=True)
-                if st.button("Classify this image", key=f"select_{idx}"):
+                if st.button("تصنيف هذه الصورة", key=f"select_{idx}"):
                     top3, probs = predict_image(img)
                     show_prediction(img, top3, probs)
     else:
-        st.info("examples folder not found. Add images to it to display them here.")
+        st.info("مجلد `examples` غير موجود. أضف صورًا إليه لتظهر هنا.")
 
-elif option == "From internet 🌐":
-    st.subheader("Classify an image from a direct link")
-    url = st.text_input("Enter image URL")
-    if st.button("Download and classify"):
+# الخيار 3: من الإنترنت
+elif option == "من الإنترنت 🌐":
+    st.subheader("تصنيف صورة عبر رابط مباشر")
+    url = st.text_input("أدخل رابط الصورة")
+    if st.button("تحميل وتوقع"):
         if not url:
-            st.warning("Please enter a valid link.")
+            st.warning("الرجاء إدخال رابط صحيح.")
         else:
             try:
-                with st.spinner("Downloading image..."):
+                with st.spinner("جاري تحميل الصورة..."):
                     response = requests.get(url, timeout=20)
                     response.raise_for_status()
                     img = Image.open(io.BytesIO(response.content))
                 top3, probs = predict_image(img)
                 show_prediction(img, top3, probs)
             except Exception as e:
-                st.error(f"Failed to download image: {e}")
+                st.error(f"فشل تحميل الصورة: {e}")
 
 st.divider()
-st.caption("⚠️ This is an educational application only and not a medical diagnostic tool.")
+st.caption("⚠️ هذا تطبيق تعليمي فقط وليس أداة طبية لتشخيص الأمراض.")
