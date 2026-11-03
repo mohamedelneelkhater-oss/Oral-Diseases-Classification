@@ -1,0 +1,16 @@
+{
+  "model_name": "DenseNet121",
+  "class_names": [
+    "Calculus",
+    "Caries_Gingivitus_ToothDiscoloration_Ulcer-yolo_annotated-Dataset",
+    "Data caries",
+    "Gingivitis",
+    "Mouth Ulcer",
+    "Tooth Discoloration",
+    "hypodontia"
+  ],
+  "img_size": [
+    160,
+    160
+  ]
+}
