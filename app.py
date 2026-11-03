@@ -33,11 +33,28 @@ DEFAULT_CLASS_NAMES = [
 ]
 DEFAULT_IMG_SIZE = (160, 160)
 
+# ==================== ضع رابط تحميل النموذج هنا ====================
+MODEL_URL = "https://رابط-تحميل-ملف-النموذج-الخاص-بك.keras"  # <-- غيّر هذا الرابط
+MODEL_PATH = BASE / "best_model.keras"
+# ==================================================================
+
+@st.cache_resource
+def download_model():
+    if MODEL_URL and "رابط-تحميل" not in MODEL_URL:
+        if not MODEL_PATH.exists():
+            with st.sidebar.spinner("جاري تحميل النموذج من الإنترنت..."):
+                try:
+                    r = requests.get(MODEL_URL, timeout=180)
+                    r.raise_for_status()
+                    MODEL_PATH.write_bytes(r.content)
+                except Exception as e:
+                    st.sidebar.error(f"فشل تحميل النموذج: {e}")
+                    return None
+    return MODEL_PATH if MODEL_PATH.exists() else None
 
 @st.cache_resource
 def load_model_and_config():
     cfg_path = BASE / "app_config.json"
-    model_path = BASE / "best_model.keras"
 
     if cfg_path.exists():
         cfg = json.loads(cfg_path.read_text(encoding="utf-8"))
@@ -47,8 +64,9 @@ def load_model_and_config():
         class_names = DEFAULT_CLASS_NAMES
         img_size = DEFAULT_IMG_SIZE
 
+    model_path = download_model()
     model = None
-    if model_path.exists():
+    if model_path:
         model = keras.models.load_model(str(model_path), compile=False)
 
     return model, class_names, img_size
@@ -57,13 +75,13 @@ def load_model_and_config():
 model, CLASS_NAMES, IMG_SIZE = load_model_and_config()
 
 if model is None:
-    st.sidebar.warning("Model file not found. Please upload best_model.keras")
+    st.sidebar.warning("لم يتم العثور على النموذج. يرجى رفع ملف best_model.keras")
     uploaded_model = st.sidebar.file_uploader("Upload model file (.keras)", type=["keras"])
     if uploaded_model is not None:
         tmp_model_path = BASE / "best_model_uploaded.keras"
         tmp_model_path.write_bytes(uploaded_model.read())
         model = keras.models.load_model(str(tmp_model_path), compile=False)
-        st.sidebar.success("Model loaded successfully")
+        st.sidebar.success("تم تحميل النموذج بنجاح")
     else:
         st.stop()
 
