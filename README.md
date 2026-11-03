@@ -27,3 +27,17 @@ against fine-tuned pretrained models, with a Gradio app for the best one.
 
 ## Tech stack
 Python · TensorFlow/Keras · scikit-learn · Matplotlib · Gradio
+git clone https://github.com/USERNAME/REPO-NAME.git
+cd REPO-NAME
+
+# إنشاء بيئة افتراضية (اختياري但推荐)
+python -m venv venv
+source venv/bin/activate   # Linux/Mac
+venv\Scripts\activate      # Windows
+
+# تثبيت المكتبات
+pip install -r requirements.txt
+
+# تشغيل تطبيق Streamlit
+streamlit run app.py
+📦 النموذج المدرب
