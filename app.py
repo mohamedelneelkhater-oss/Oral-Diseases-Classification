@@ -1,17 +1,23 @@
-import urllib.request
+import zipfile, urllib.request
 from pathlib import Path
-import streamlit as st
 
 MODEL_URL = "https://github.com/mohamedelneelkhater-oss/Oral-Diseases-Classification/releases/download/v1.0/best_model.keras"
+MODEL_PATH = Path("best_model.keras")
 
-@st.cache_resource(show_spinner="Downloading model...")
-def get_model_file() -> Path:
-    path = Path("best_model.keras")
+def ensure_model(path: Path = MODEL_PATH, url: str = MODEL_URL) -> Path:
+    if path.exists() and not zipfile.is_zipfile(path):   # corrupt / partial file
+        path.unlink()
     if not path.exists():
-        urllib.request.urlretrieve(MODEL_URL, path)
+        tmp = path.with_suffix(".tmp")
+        urllib.request.urlretrieve(url, tmp)
+        if not zipfile.is_zipfile(tmp):
+            tmp.unlink(missing_ok=True)
+            raise RuntimeError("Downloaded file is not a valid .keras file. Check MODEL_URL.")
+        tmp.replace(path)
     return path
 
-model_path = get_model_file()
+model_path = ensure_model()
+model = keras.models.load_model(str(model_path), compile=False)
 import os
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 
