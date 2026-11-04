@@ -141,23 +141,26 @@ def fetch_image(url: str) -> Image.Image:
     raise ValueError("تحويلات كثيرة")
 
 
+def sample_no(path) -> int:
+    """الرقم الفريد للصورة (1-30) المأخوذ من اسم الملف."""
+    m = re.search(r"\d+", Path(path).stem)
+    return int(m.group()) if m else 0
+
+
 @st.cache_data
 def list_samples(class_names: tuple):
-    """صور المعرض: samples/<class>/*.jpg موزّعة بالتناوب بين الأصناف."""
-    if not SAMPLES_DIR.is_dir():
-        return []
+    """يبحث عن فولدرات الأصناف داخل samples/ أو بجانب app.py مباشرة (calculus, data_caries, ...)."""
     names = {slug(c): c for c in class_names}
-    groups = []
-    for sub in sorted(p for p in SAMPLES_DIR.iterdir() if p.is_dir()):
-        files = sorted(f for f in sub.iterdir() if f.suffix.lower() in IMG_EXTS)
-        if files:
-            groups.append([(str(f), names.get(slug(sub.name))) for f in files])
     items = []
-    for rnd in range(max((len(g) for g in groups), default=0)):
-        for g in groups:
-            if rnd < len(g) and len(items) < MAX_SAMPLES:
-                items.append(g[rnd])
-    return items
+    for root in (SAMPLES_DIR, BASE):
+        if not root.is_dir():
+            continue
+        for sub in sorted(p for p in root.iterdir() if p.is_dir() and slug(p.name) in names):
+            items += [(str(f), names[slug(sub.name)]) for f in sub.iterdir() if f.suffix.lower() in IMG_EXTS]
+        if items:
+            break
+    items.sort(key=lambda it: (sample_no(it[0]), it[0]))
+    return items[:MAX_SAMPLES]
 
 
 def predict(img: Image.Image) -> np.ndarray:
@@ -200,14 +203,15 @@ else:
     st.subheader("معرض الصور من مجموعة البيانات")
     items = list_samples(tuple(CLASS_NAMES))
     if not items:
-        st.info("فولدر samples غير موجود في المستودع. ارفعه بجانب app.py ثم أعد تشغيل التطبيق.")
+        st.info("لم أجد فولدرات الصور. ضع فولدرات الأصناف (calculus, data_caries, ...) بجانب app.py أو داخل فولدر samples ثم أعد تشغيل التطبيق.")
     else:
         st.caption("اضغط «اختيار» تحت أي صورة لتصنيفها. قد تكون هذه الصور من بيانات التدريب.")
         cols = st.columns(6)
         for k, (path, label) in enumerate(items):
+            no = sample_no(path)
             with cols[k % 6]:
-                st.image(path, caption=label_ar(label) if label else "", width=130)
-                if st.button("اختيار", key=f"pick_{k}"):
+                st.image(path, caption=f"#{no} - {label_ar(label)}" if label else f"#{no}", width=130)
+                if st.button(f"اختيار #{no}", key=f"pick_{no}_{k}"):
                     st.session_state["sel"] = (path, label)
         if "sel" in st.session_state:
             path, true_label = st.session_state["sel"]
@@ -230,6 +234,8 @@ if image is not None:
     c2.metric("الثقة", f"{probs[top]:.1%}")
     if probs[top] < LOW_CONFIDENCE:
         c2.warning("الثقة منخفضة: قد لا تكون الصورة واضحة أو النموذج غير متأكد.")
+    if source.startswith("🖼️") and "sel" in st.session_state:
+        c2.caption(f"رقم الصورة: #{sample_no(st.session_state['sel'][0])}")
     if true_label:
         ok = true_label == CLASS_NAMES[top]
         c2.caption(f"التصنيف الأصلي: {label_ar(true_label)} - " + ("✅ صحيح" if ok else "❌ مختلف"))
