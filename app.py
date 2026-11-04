@@ -2,7 +2,7 @@ import urllib.request
 from pathlib import Path
 import streamlit as st
 
-MODEL_URL = "https://github.com/mohamedelneelkhater-oss/Oral-Diseases-Classification/releases/tag/v1.0"
+MODEL_URL = "https://github.com/mohamedelneelkhater-oss/Oral-Diseases-Classification/releases/download/v1.0/best_model.keras"
 
 @st.cache_resource(show_spinner="Downloading model...")
 def get_model_file() -> Path:
