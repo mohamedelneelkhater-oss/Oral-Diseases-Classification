@@ -1,11 +1,22 @@
-import zipfile, urllib.request
+import os
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
+
+import json
+import urllib.request
+import zipfile
 from pathlib import Path
+
+import numpy as np
+import pandas as pd
+import streamlit as st
+import keras
+from PIL import Image
 
 MODEL_URL = "https://github.com/mohamedelneelkhater-oss/Oral-Diseases-Classification/releases/download/v1.0/best_model.keras"
 MODEL_PATH = Path("best_model.keras")
 
 def ensure_model(path: Path = MODEL_PATH, url: str = MODEL_URL) -> Path:
-    if path.exists() and not zipfile.is_zipfile(path):   # corrupt / partial file
+    if path.exists() and not zipfile.is_zipfile(path):
         path.unlink()
     if not path.exists():
         tmp = path.with_suffix(".tmp")
