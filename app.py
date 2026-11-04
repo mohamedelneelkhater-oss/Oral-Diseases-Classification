@@ -1,3 +1,17 @@
+import urllib.request
+from pathlib import Path
+import streamlit as st
+
+MODEL_URL = "https://github.com/mohamedelneelkhater-oss/Oral-Diseases-Classification/releases/tag/v1.0"
+
+@st.cache_resource(show_spinner="Downloading model...")
+def get_model_file() -> Path:
+    path = Path("best_model.keras")
+    if not path.exists():
+        urllib.request.urlretrieve(MODEL_URL, path)
+    return path
+
+model_path = get_model_file()
 import os
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 
